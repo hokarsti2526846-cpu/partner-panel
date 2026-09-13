@@ -4,8 +4,8 @@ from supabase import create_client, Client
 # ============================================
 # Environment Variables - تەنها لە Render
 # ============================================
-SUPABASE_URL = os.environ.get("https://pswnlfmyvgwwbawqsypw.supabase.co")
-SUPABASE_KEY = os.environ.get("sb_publishable_s_4Kb9eD3c86Hz8BtjGIlg_xap07coe")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise ValueError("SUPABASE_URL و SUPABASE_KEY دەبێت لە Environment Variables دابنرێن")
