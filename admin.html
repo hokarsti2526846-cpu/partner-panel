@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Admin Panel | پانێڵی پارتنەرەکان</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: rgba(22, 27, 34, 0.7);
+            --border: rgba(88, 166, 255, 0.15);
+            --blue: #58a6ff;
+            --purple: #8b5cf6;
+            --green: #3fb950;
+            --red: #f85149;
+            --gold: #f0b429;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+        }
+
+        body {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at 20% 20%, rgba(248, 81, 73, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container { max-width: 1600px; margin: 0 auto; position: relative; z-index: 1; }
+
+        /* Loading */
+        #loading {
+            text-align: center;
+            padding: 100px 20px;
+            color: var(--text-muted);
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(88, 166, 255, 0.2);
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Access Denied */
+        #accessDenied {
+            display: none;
+            text-align: center;
+            padding: 100px 20px;
+        }
+        .access-denied-box {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            border-radius: 24px;
+            padding: 50px 40px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .access-denied-box .icon { font-size: 5em; margin-bottom: 20px; }
+        .access-denied-box h1 { color: var(--red); margin-bottom: 15px; }
+        .access-denied-box p { color: var(--text-muted); line-height: 1.8; margin-bottom: 20px; }
+        .access-denied-box a {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 22px 28px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 { color: var(--red); font-size: 1.6em; display: flex; align-items: center; gap: 10px; }
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-user img {
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            border: 2px solid var(--red);
+        }
+        .header-user-info { text-align: right; }
+        .header-user-info .name { color: #fff; font-weight: 700; font-size: 0.95em; }
+        .header-user-info .role { color: var(--red); font-size: 0.75em; font-weight: 600; }
+        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn {
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid;
+            font-size: 0.85em;
+        }
+        .btn-primary { background: rgba(88, 166, 255, 0.15); border-color: var(--blue); color: var(--blue); }
+        .btn-primary:hover { background: rgba(88, 166, 255, 0.3); }
+        .btn-danger { background: rgba(248, 81, 73, 0.15); border-color: var(--red); color: var(--red); }
+        .btn-danger:hover { background: rgba(248, 81, 73, 0.3); }
+        .btn-gold { background: rgba(240, 180, 41, 0.15); border-color: var(--gold); color: var(--gold); }
+        .btn-gold:hover { background: rgba(240, 180, 41, 0.3); }
+        .btn-green { background: rgba(63, 185, 80, 0.15); border-color: var(--green); color: var(--green); }
+        .btn-green:hover { background: rgba(63, 185, 80, 0.3); }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--blue), var(--purple));
+        }
+        .stat-card.red::before { background: linear-gradient(90deg, var(--red), #ff6b00); }
+        .stat-card.gold::before { background: linear-gradient(90deg, var(--gold), #ff9800); }
+        .stat-card.green::before { background: linear-gradient(90deg, var(--green), #00d4aa); }
+        .stat-card.purple::before { background: linear-gradient(90deg, var(--purple), #e91e63); }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--blue); }
+        .stat-icon { font-size: 2em; margin-bottom: 8px; display: block; }
+        .stat-value { font-size: 2em; font-weight: 900; color: var(--blue); margin-bottom: 5px; }
+        .stat-card.red .stat-value { color: var(--red); }
+        .stat-card.gold .stat-value { color: var(--gold); }
+        .stat-card.green .stat-value { color: var(--green); }
+        .stat-card.purple .stat-value { color: var(--purple); }
+        .stat-label { color: var(--text-muted); font-size: 0.85em; }
+
+        /* Search */
+        .search-section {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .search-section input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 18px;
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1em;
+            outline: none;
+        }
+        .search-section input:focus { border-color: var(--blue); }
+
+        /* Table */
+        .table-section {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 25px;
+            overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th {
+            text-align: right;
+            padding: 12px 8px;
+            color: var(--blue);
+            font-size: 0.8em;
+            font-weight: 700;
+            border-bottom: 2px solid rgba(88, 166, 255, 0.2);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+        }
+        td { padding: 10px 8px; border-bottom: 1px solid rgba(48, 54, 61, 0.5); font-size: 0.85em; }
+        tr:hover td { background: rgba(88, 166, 255, 0.05); }
+        .user-id { font-family: monospace; color: var(--blue); font-size: 0.9em; }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .badge-primary { background: rgba(88, 166, 255, 0.15); color: var(--blue); }
+        .badge-gold { background: rgba(240, 180, 41, 0.15); color: var(--gold); }
+        .badge-green { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+        .badge-red { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+        .actions { display: flex; gap: 4px; flex-wrap: wrap; }
+        .action-btn {
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75em;
+            font-weight: 600;
+            border: 1px solid;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .action-btn.edit { background: rgba(88, 166, 255, 0.15); border-color: var(--blue); color: var(--blue); }
+        .action-btn.edit:hover { background: rgba(88, 166, 255, 0.3); }
+        .action-btn.add { background: rgba(63, 185, 80, 0.15); border-color: var(--green); color: var(--green); }
+        .action-btn.add:hover { background: rgba(63, 185, 80, 0.3); }
+        .action-btn.remove { background: rgba(240, 180, 41, 0.15); border-color: var(--gold); color: var(--gold); }
+        .action-btn.remove:hover { background: rgba(240, 180, 41, 0.3); }
+        .action-btn.delete { background: rgba(248, 81, 73, 0.15); border-color: var(--red); color: var(--red); }
+        .action-btn.delete:hover { background: rgba(248, 81, 73, 0.3); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease-out;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal h2 { color: var(--blue); margin-bottom: 20px; text-align: center; font-size: 1.3em; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .form-group { margin-bottom: 10px; }
+        .form-group label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95em;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--blue); }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .modal-actions .btn { padding: 12px 24px; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 28px;
+            z-index: 99999;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            animation: toastIn 0.4s ease-out;
+            font-weight: 600;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, -30px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .toast.success { border-color: var(--green); color: var(--green); }
+        .toast.error { border-color: var(--red); color: var(--red); }
+        .toast.info { border-color: var(--blue); color: var(--blue); }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; }
+            .form-grid { grid-template-columns: 1fr; }
+            th, td { padding: 8px 5px; font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>دڵنیابوونەوە لە دەستڕاگەیشتن...</p>
+    </div>
+
+    <!-- Access Denied -->
+    <div id="accessDenied">
+        <div class="access-denied-box">
+            <div class="icon">🚫</div>
+            <h1>دەستڕاگەیشتن ڕەتکرایەوە</h1>
+            <p>تۆ مۆڵەتی چوونە ژوورەوەی بۆ ئەم پەڕەیە نیت. تەنها ئەمینەکان دەتوانن بچنە ناو Admin Panel.</p>
+            <a href="/partner-panel/">← گەڕانەوە بۆ پانێڵەکە</a>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" style="display: none;">
+        <div class="container">
+            <div class="header">
+                <h1>⚙️ Admin Panel</h1>
+                <div class="header-user">
+                    <div class="header-user-info">
+                        <div class="name" id="adminName">...</div>
+                        <div class="role">🛡️ ئەمین</div>
+                    </div>
+                    <img id="adminAvatar" src="" alt="avatar">
+                </div>
+                <div class="header-actions">
+                    <a href="/partner-panel/" class="btn btn-primary">← گەڕانەوە</a>
+                    <button class="btn btn-green" onclick="openGiveAllXP()">🎁 XP بۆ هەمووان</button>
+                    <button class="btn btn-gold" onclick="openNotification()">📢 ئاگاداری</button>
+                    <button class="btn btn-primary" onclick="exportJSON()">📥 Export JSON</button>
+                    <button class="btn btn-danger" onclick="logout()">🚪 دەرچوون</button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card red">
+                    <span class="stat-icon">👥</span>
+                    <div class="stat-value" id="statTotalPartners">0</div>
+                    <div class="stat-label">کۆی پارتنەرەکان</div>
+                </div>
+                <div class="stat-card gold">
+                    <span class="stat-icon">⭐</span>
+                    <div class="stat-value" id="statTotalXP">0</div>
+                    <div class="stat-label">کۆی XP</div>
+                </div>
+                <div class="stat-card green">
+                    <span class="stat-icon">📢</span>
+                    <div class="stat-value" id="statTotalAds">0</div>
+                    <div class="stat-label">کۆی ڕیکلامەکان</div>
+                </div>
+                <div class="stat-card purple">
+                    <span class="stat-icon">🎙️</span>
+                    <div class="stat-value" id="statTotalVoice">0</div>
+                    <div class="stat-label">کۆی ڤۆیس (سەعات)</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">✅</span>
+                    <div class="stat-value" id="statActiveToday">0</div>
+                    <div class="stat-label">چالاکی ئەمڕۆ</div>
+                </div>
+                <div class="stat-card gold">
+                    <span class="stat-icon">📊</span>
+                    <div class="stat-value" id="statAvgLevel">0</div>
+                    <div class="stat-label">تێکڕای ئاست</div>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-section">
+                <span style="font-size: 1.5em;">🔍</span>
+                <input type="text" id="searchInput" placeholder="گەڕان بەدوای User ID..." oninput="filterTable()">
+                <button class="btn btn-primary" onclick="loadPartners()">🔄 نوێکردنەوە</button>
+            </div>
+
+            <!-- Table -->
+            <div class="table-section">
+                <h3 style="color: var(--blue); margin-bottom: 15px;">👥 لیستی هەموو پارتنەرەکان</h3>
+                <table id="partnersTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User ID</th>
+                            <th>ئاست</th>
+                            <th>XP</th>
+                            <th>ڕیکلام (گشتی)</th>
+                            <th>ڤۆیس (گشتی)</th>
+                            <th>ئەمڕۆ</th>
+                            <th>Streak</th>
+                            <th>کردارەکان</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partnersBody">
+                        <tr><td colspan="9" style="text-align: center; padding: 40px;">داتاکان بار دەکرێن...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h2>✏️ دەستکاری بەکارهێنەر</h2>
+            <div class="form-group">
+                <label>🆔 User ID</label>
+                <input type="text" id="editUserId" readonly>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>⭐ XP</label>
+                    <input type="number" id="editXp">
+                </div>
+                <div class="form-group">
+                    <label>🎯 ئاست (Level)</label>
+                    <input type="number" id="editLevel">
+                </div>
+                <div class="form-group">
+                    <label>📢 ڕیکلامی گشتی</label>
+                    <input type="number" id="editAllAds">
+                </div>
+                <div class="form-group">
+                    <label>🎙️ ڤۆیسی گشتی (خولەک)</label>
+                    <input type="number" id="editAllMins">
+                </div>
+                <div class="form-group">
+                    <label>📢 ڕیکلامی ئەمڕۆ</label>
+                    <input type="number" id="editDayAds">
+                </div>
+                <div class="form-group">
+                    <label>🎙️ ڤۆیسی ئەمڕۆ (خولەک)</label>
+                    <input type="number" id="editDayMins">
+                </div>
+                <div class="form-group">
+                    <label>📅 ڕیکلامی هەفتە</label>
+                    <input type="number" id="editWeekAds">
+                </div>
+                <div class="form-group">
+                    <label>🎙️ ڤۆیسی هەفتە (خولەک)</label>
+                    <input type="number" id="editWeekMins">
+                </div>
+                <div class="form-group">
+                    <label>📆 ڕیکلامی مانگ</label>
+                    <input type="number" id="editMonthAds">
+                </div>
+                <div class="form-group">
+                    <label>🎙️ ڤۆیسی مانگ (خولەک)</label>
+                    <input type="number" id="editMonthMins">
+                </div>
+                <div class="form-group">
+                    <label>🔥 Streak (ڕۆژ)</label>
+                    <input type="number" id="editStreak">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-green" onclick="saveEdit()">💾 پاشەکەوتکردن</button>
+                <button class="btn btn-gold" onclick="resetUser()">🔄 سفرکردنەوە</button>
+                <button class="btn btn-primary" onclick="closeModal('editModal')">❌ داخستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Give All XP Modal -->
+    <div class="modal-overlay" id="giveAllModal">
+        <div class="modal" style="max-width: 450px; text-align: center;">
+            <div style="font-size: 4em; margin-bottom: 15px;">🎁</div>
+            <h2>بەخشی XP بە هەمووان</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">بڕی XP بنووسە بۆ بەخشی بە هەموو پارتنەرەکان</p>
+            <div class="form-group">
+                <input type="number" id="giveAllAmount" placeholder="بۆ نموونە: 100" style="text-align: center; font-size: 1.2em;">
+            </div>
+            <p style="color: var(--red); font-size: 0.85em; margin-top: 10px;">⚠ە ئەم کردارە ناگەڕێتەوە!</p>
+            <div class="modal-actions">
+                <button class="btn btn-green" onclick="giveAllXP()">✅ بەخشی</button>
+                <button class="btn btn-primary" onclick="closeModal('giveAllModal')">❌ داخستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div class="modal-overlay" id="notificationModal">
+        <div class="modal" style="max-width: 500px;">
+            <h2>📢 ناردنی ئاگاداری</h2>
+            <div class="form-group">
+                <label>دەقی ئاگاداری</label>
+                <textarea id="notifMessage" rows="4" placeholder="ئاگادارییەکەت لێرە بنووسە..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-green" onclick="sendNotification()">📤 ناردن</button>
+                <button class="btn btn-primary" onclick="closeModal('notificationModal')">❌ داخستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="max-width: 450px; text-align: center;">
+            <div style="font-size: 4em; margin-bottom: 15px;">⚠️</div>
+            <h2 style="color: var(--red);">سڕینەوەی بەکارهێنەر</h2>
+            <p style="color: var(--text); margin-bottom: 15px;">ئایا دڵنیایت دەتەوێت ئەم بەکارهێنەرە بسڕیتەوە؟</p>
+            <p id="deleteUserId" style="color: var(--text-muted); margin-bottom: 15px; font-family: monospace;"></p>
+            <p style="color: var(--red); font-weight: 700;">⚠ە ئەم کردارە ناگەڕێتەوە!</p>
+            <div class="modal-actions">
+                <button class="btn btn-danger" onclick="deleteUser()">🗑️ بسڕەوە</button>
+                <button class="btn btn-primary" onclick="closeModal('deleteModal')">❌ پەشیمانبوونەوە</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // ⚠ە گرنگ: ئەم ٣ ID ی ئەمینەکانن
+        // ============================================
+        const ADMIN_IDS = [
+            725407103916703755,  // ← STORMBOY
+            952854100901519420,  // ← MRX
+            1397972997951983708  // ← NINE
+        ];
+
+        const SUPABASE_URL = "https://pswnlfmyvgwwbawqsypw.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_-w-TNLen9XYLw7Fd3AF4Xw_NGD8IzQQ";
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentAdminId = null;
+        let allPartners = [];
+
+        // ============================================
+        // Toast
+        // ============================================
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastIn 0.4s reverse';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        // ============================================
+        // Check Admin Access
+        // ============================================
+        async function checkAccess() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+
+            if (!session || !session.user) {
+                window.location.href = '/partner-panel/';
+                return;
+            }
+
+            const discordId = parseInt(session.user.user_metadata.provider_id || session.user.id);
+            currentAdminId = discordId;
+
+            if (!ADMIN_IDS.includes(discordId)) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('accessDenied').style.display = 'block';
+                return;
+            }
+
+            // ئەمینە — پیشانی پانێڵەکە
+            document.getElementById('adminName').textContent = session.user.user_metadata.full_name || 'Admin';
+            document.getElementById('adminAvatar').src = session.user.user_metadata.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            await loadPartners();
+        }
+
+        // ============================================
+        // Load Partners
+        // ============================================
+        async function loadPartners() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('stats_history')
+                    .select('*')
+                    .order('xp', { ascending: false });
+
+                if (error) {
+                    showToast('❌ هەڵە: ' + error.message, 'error');
+                    return;
+                }
+
+                allPartners = data || [];
+                updateStats();
+                renderTable(allPartners);
+                showToast('✅ داتاکان نوێکرانەوە', 'success');
+            } catch (e) {
+                showToast('❌ هەڵە لە پەیوەندی', 'error');
+            }
+        }
+
+        function updateStats() {
+            const totalPartners = allPartners.length;
+            const totalXP = allPartners.reduce((sum, p) => sum + (p.xp || 0), 0);
+            const totalAds = allPartners.reduce((sum, p) => sum + (p.all_ads || 0), 0);
+            const totalMins = allPartners.reduce((sum, p) => sum + (p.all_mins || 0), 0);
+            const activeToday = allPartners.filter(p => (p.day_ads || 0) >= 3 && (p.day_mins || 0) >= 120).length;
+            const avgLevel = totalPartners > 0 ? (allPartners.reduce((sum, p) => sum + (p.level || 1), 0) / totalPartners).toFixed(1) : 0;
+
+            document.getElementById('statTotalPartners').textContent = totalPartners.toLocaleString();
+            document.getElementById('statTotalXP').textContent = totalXP.toLocaleString();
+            document.getElementById('statTotalAds').textContent = totalAds.toLocaleString();
+            document.getElementById('statTotalVoice').textContent = Math.floor(totalMins / 60).toLocaleString();
+            document.getElementById('statActiveToday').textContent = activeToday.toLocaleString();
+            document.getElementById('statAvgLevel').textContent = avgLevel;
+        }
+
+        function renderTable(partners) {
+            const tbody = document.getElementById('partnersBody');
+
+            if (!partners || partners.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">هیچ داتایەک نییە</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = partners.map((p, index) => {
+                const dayAds = p.day_ads || 0;
+                const dayMins = p.day_mins || 0;
+
+                return `
+                <tr data-user-id="${p.user_id}">
+                    <td>${index + 1}</td>
+                    <td><span class="user-id">${p.user_id}</span></td>
+                    <td><span class="badge badge-gold">${p.level || 1}</span></td>
+                    <td><span class="badge badge-primary">${(p.xp || 0).toLocaleString()}</span></td>
+                    <td>${(p.all_ads || 0).toLocaleString()}</td>
+                    <td>${Math.floor((p.all_mins || 0) / 60)}h ${(p.all_mins || 0) % 60}m</td>
+                    <td>
+                        <span class="badge ${dayAds >= 3 ? 'badge-green' : 'badge-red'}">${dayAds}/3</span>
+                        <span class="badge ${dayMins >= 120 ? 'badge-green' : 'badge-red'}">${Math.floor(dayMins / 60)}h</span>
+                    </td>
+                    <td>🔥 ${p.daily_streak || 0}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="action-btn edit" onclick='openEdit(${JSON.stringify(p)})'>✏️ دەستکاری</button>
+                            <button class="action-btn add" onclick="quickAddXP(${p.user_id}, 100)">+100</button>
+                            <button class="action-btn remove" onclick="quickAddXP(${p.user_id}, -100)">-100</button>
+                            <button class="action-btn delete" onclick="confirmDelete(${p.user_id})">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!query) {
+                renderTable(allPartners);
+                return;
+            }
+            const filtered = allPartners.filter(p => String(p.user_id).includes(query));
+            renderTable(filtered);
+        }
+
+        // ============================================
+        // Edit
+        // ============================================
+        function openEdit(p) {
+            document.getElementById('editUserId').value = p.user_id;
+            document.getElementById('editXp').value = p.xp || 0;
+            document.getElementById('editLevel').value = p.level || 1;
+            document.getElementById('editAllAds').value = p.all_ads || 0;
+            document.getElementById('editAllMins').value = p.all_mins || 0;
+            document.getElementById('editDayAds').value = p.day_ads || 0;
+            document.getElementById('editDayMins').value = p.day_mins || 0;
+            document.getElementById('editWeekAds').value = p.week_ads || 0;
+            document.getElementById('editWeekMins').value = p.week_mins || 0;
+            document.getElementById('editMonthAds').value = p.month_ads || 0;
+            document.getElementById('editMonthMins').value = p.month_mins || 0;
+            document.getElementById('editStreak').value = p.daily_streak || 0;
+
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        async function saveEdit() {
+            const userId = document.getElementById('editUserId').value;
+
+            const data = {
+                xp: parseInt(document.getElementById('editXp').value) || 0,
+                level: parseInt(document.getElementById('editLevel').value) || 1,
+                all_ads: parseInt(document.getElementById('editAllAds').value) || 0,
+                all_mins: parseInt(document.getElementById('editAllMins').value) || 0,
+                day_ads: parseInt(document.getElementById('editDayAds').value) || 0,
+                day_mins: parseInt(document.getElementById('editDayMins').value) || 0,
+                week_ads: parseInt(document.getElementById('editWeekAds').value) || 0,
+                week_mins: parseInt(document.getElementById('editWeekMins').value) || 0,
+                month_ads: parseInt(document.getElementById('editMonthAds').value) || 0,
+                month_mins: parseInt(document.getElementById('editMonthMins').value) || 0,
+                daily_streak: parseInt(document.getElementById('editStreak').value) || 0,
+            };
+
+            try {
+                const { error } = await supabaseClient
+                    .from('stats_history')
+                    .update(data)
+                    .eq('user_id', userId);
+
+                if (error) {
+                    showToast('❌ هەڵە: ' + error.message, 'error');
+                    return;
+                }
+
+                showToast('✅ بە سەرکەوتوویی نوێکرایەوە!');
+                closeModal('editModal');
+                await loadPartners();
+            } catch (e) {
+                showToast('❌ هەڵە لە پەیوەندی', 'error');
+            }
+        }
+
+        async function resetUser() {
+            if (!confirm('⚠ە ئایا دڵنیایت دەتەوێت هەموو ئامارەکانی ئەم بەکارهێنەرە بسڕیتەوە؟')) return;
+
+            const userId = document.getElementById('editUserId').value;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('stats_history')
+                    .update({
+                        xp: 0, level: 1, all_ads: 0, all_mins: 0,
+                        day_ads: 0, day_mins: 0, week_ads: 0, week_mins: 0,
+                        month_ads: 0, month_mins: 0, daily_streak: 0
+                    })
+                    .eq('user_id', userId);
+
+                if (error) {
+                    showToast('❌ هەڵە: ' + error.message, 'error');
+                    return;
+                }
+
+                showToast('✅ ئامارەکان سفرکرانەوە!');
+                closeModal('editModal');
+                await loadPartners();
+            } catch (e) {
+                showToast('❌ هەڵە لە پەیوەندی', 'error');
+            }
+        }
+
+        // ============================================
+        // Quick Add XP
+        // ============================================
+        async function quickAddXP(userId, amount) {
+            const partner = allPartners.find(p => p.user_id === userId);
+            if (!partner) return;
+
+            const newXP = Math.max(0, (partner.xp || 0) + amount);
+            const newLevel = 1 + Math.floor(newXP / 1000);
+
+            try {
+                const { error } = await supabaseClient
+                    .from('stats_history')
+                    .update({ xp: newXP, level: newLevel })
+                    .eq('user_id', userId);
+
+                if (error) {
+                    showToast('❌ هەڵە: ' + error.message, 'error');
+                    return;
+                }
+
+                showToast(`✅ ${amount > 0 ? '+' : ''}${amount} XP جێبەجێ کرا!`);
+                await loadPartners();
+            } catch (e) {
+                showToast('❌ هەڵە لە پەیوەندی', 'error');
+            }
+        }
+
+        // ============================================
+        // Delete User
+        // ============================================
+        let deleteUserId = null;
+
+        function confirmDelete(userId) {
+            deleteUserId = userId;
+            document.getElementById('deleteUserId').textContent = 'User ID: ' + userId;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        async function deleteUser() {
+            try {
+                const tables = ['stats_history', 'active_ads', 'active_voice', 'excuses', 'vacations', 'punishment_history'];
+                for (const table of tables) {
+                    await supabaseClient.from(table).delete().eq('user_id', deleteUserId);
+                }
+
+                showToast('✅ بەکارهێنەر سڕایەوە!');
+                closeModal('deleteModal');
+                await loadPartners();
+            } catch (e) {
+                showToast('❌ هەڵە لە سڕینەوە', 'error');
+            }
+        }
+
+        // ============================================
+        // Give All XP
+        // ============================================
+        function openGiveAllXP() {
+            document.getElementById('giveAllAmount').value = '';
+            document.getElementById('giveAllModal').classList.add('active');
+        }
+
+        async function giveAllXP() {
+            const amount = parseInt(document.getElementById('giveAllAmount').value);
+            if (!amount || amount === 0) {
+                showToast('⚠ە بڕی XP بنووسە', 'error');
+                return;
+            }
+
+            if (!confirm(`⚠ە ئایا دڵنیایت دەتەوێت ${amount} XP بە هەمووان ببەخشیت؟`)) return;
+
+            try {
+                for (const partner of allPartners) {
+                    const newXP = Math.max(0, (partner.xp || 0) + amount);
+                    const newLevel = 1 + Math.floor(newXP / 1000);
+                    await supabaseClient.from('stats_history').update({ xp: newXP, level: newLevel }).eq('user_id', partner.user_id);
+                }
+
+                showToast(`✅ ${amount} XP بە هەمووان بەخشرا!`);
+                closeModal('giveAllModal');
+                await loadPartners();
+            } catch (e) {
+                showToast('❌ هەڵە لە بەخشی', 'error');
+            }
+        }
+
+        // ============================================
+        // Send Notification
+        // ============================================
+        function openNotification() {
+            document.getElementById('notifMessage').value = '';
+            document.getElementById('notificationModal').classList.add('active');
+        }
+
+        async function sendNotification() {
+            const message = document.getElementById('notifMessage').value.trim();
+            if (!message) {
+                showToast('⚠ە دەقی ئاگاداری بنووسە', 'error');
+                return;
+            }
+
+            try {
+                await supabaseClient.from('admin_notifications').insert({
+                    message: message,
+                    sent_by: currentAdminId,
+                    sent_at: new Date().toISOString()
+                });
+
+                showToast('✅ ئاگاداری تۆمارکرا!');
+                closeModal('notificationModal');
+            } catch (e) {
+                showToast('❌ هەڵە لە ناردن', 'error');
+            }
+        }
+
+        // ============================================
+        // Export JSON
+        // ============================================
+        function exportJSON() {
+            const data = {
+                exported_at: new Date().toISOString(),
+                exported_by: currentAdminId,
+                total_partners: allPartners.length,
+                partners: allPartners
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `admin-backup-${Date.now()}.json`;
+            link.click();
+
+            showToast('✅ داتاکان داگیران!');
+        }
+
+        // ============================================
+        // Logout
+        // ============================================
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/partner-panel/';
+        }
+
+        // ============================================
+        // Modal Close
+        // ============================================
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            m.addEventListener('click', (e) => {
+                if (e.target === m) m.classList.remove('active');
+            });
+        });
+
+        // ============================================
+        // Init
+        // ============================================
+        window.addEventListener('load', checkAccess);
+
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN') {
+                checkAccess();
+            }
+        });
+    </script>
+</body>
+</html>
