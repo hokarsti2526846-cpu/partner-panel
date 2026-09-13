@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبۆرد | {{ user_tag }}</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#58a6ff">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: rgba(22, 27, 34, 0.7);
+            --border: rgba(88, 166, 255, 0.15);
+            --blue: #58a6ff;
+            --purple: #8b5cf6;
+            --green: #3fb950;
+            --red: #f85149;
+            --gold: #f0b429;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f0f2f5;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --border: rgba(88, 166, 255, 0.3);
+            --text: #1f2937;
+            --text-muted: #6b7280;
+        }
+
+        body {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                radial-gradient(circle at 15% 15%, rgba(88, 166, 255, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 45%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px 60px;
+        }
+
+        .header {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-info { display: flex; align-items: center; gap: 18px; }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 85px;
+            height: 85px;
+        }
+
+        .avatar {
+            width: 75px; height: 75px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            background: linear-gradient(var(--bg-primary), var(--bg-primary)) padding-box,
+                        linear-gradient(135deg, var(--accent), var(--purple)) border-box;
+            box-shadow: 0 0 25px var(--accent);
+            animation: pulse 3s ease-in-out infinite;
+            position: absolute;
+            top: 5px; left: 5px;
+        }
+
+        .avatar-wrapper.frame-bronze::before {
+            content: ''; position: absolute; inset: 0;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(205, 127, 50, 0.6);
+            animation: rotate 8s linear infinite;
+            background: conic-gradient(from 0deg, transparent, #cd7f32, transparent);
+            -webkit-mask: radial-gradient(circle, transparent 70%, black 71%);
+            mask: radial-gradient(circle, transparent 70%, black 71%);
+        }
+
+        .avatar-wrapper.frame-silver::before {
+            content: ''; position: absolute; inset: 0;
+            border-radius: 50%;
+            box-shadow: 0 0 25px rgba(192, 192, 192, 0.7);
+            animation: rotate 8s linear infinite;
+            background: conic-gradient(from 0deg, transparent, #c0c0c0, transparent);
+            -webkit-mask: radial-gradient(circle, transparent 70%, black 71%);
+            mask: radial-gradient(circle, transparent 70%, black 71%);
+        }
+
+        .avatar-wrapper.frame-gold::before {
+            content: ''; position: absolute; inset: 0;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(240, 180, 41, 0.8);
+            animation: rotate 6s linear infinite;
+            background: conic-gradient(from 0deg, transparent, #f0b429, transparent);
+            -webkit-mask: radial-gradient(circle, transparent 70%, black 71%);
+            mask: radial-gradient(circle, transparent 70%, black 71%);
+        }
+
+        .avatar-wrapper.frame-diamond::before {
+            content: ''; position: absolute; inset: -3px;
+            border-radius: 50%;
+            box-shadow: 0 0 35px rgba(88, 166, 255, 0.9), 0 0 60px rgba(139, 92, 246, 0.6);
+            animation: rotate 5s linear infinite;
+            background: conic-gradient(from 0deg, #58a6ff, #8b5cf6, #58a6ff);
+            -webkit-mask: radial-gradient(circle, transparent 65%, black 66%);
+            mask: radial-gradient(circle, transparent 65%, black 66%);
+        }
+
+        .avatar-wrapper.frame-legend::before {
+            content: ''; position: absolute; inset: -5px;
+            border-radius: 50%;
+            box-shadow: 0 0 45px rgba(240, 180, 41, 1), 0 0 80px rgba(255, 107, 0, 0.7);
+            animation: rotate 3s linear infinite;
+            background: conic-gradient(from 0deg, #f0b429, #ff6b00, #f0b429, #ff6b00);
+            -webkit-mask: radial-gradient(circle, transparent 60%, black 61%);
+            mask: radial-gradient(circle, transparent 60%, black 61%);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 25px var(--accent); }
+            50% { box-shadow: 0 0 45px var(--accent); }
+        }
+
+        .user-details h2 { color: var(--text); font-size: 1.5em; font-weight: 700; margin-bottom: 6px; }
+        .user-details .title-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: #fff;
+            border-radius: 8px;
+            font-size: 0.72em;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .user-details p { color: var(--text-muted); font-size: 0.85em; }
+
+        .badges-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .mini-badge { padding: 4px 12px; border-radius: 8px; font-size: 0.72em; font-weight: 700; }
+        .badge-level { background: linear-gradient(135deg, var(--gold), #ff9800); color: #000; }
+        .badge-rank { background: linear-gradient(135deg, var(--blue), var(--purple)); color: #fff; }
+        .badge-streak { background: linear-gradient(135deg, #f85149, #ff6b00); color: #fff; }
+
+        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+        .icon-btn {
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 12px;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2em;
+            text-decoration: none;
+        }
+
+        .icon-btn:hover {
+            background: rgba(88, 166, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(88, 166, 255, 0.3);
+        }
+
+        .logout-btn {
+            padding: 12px 22px;
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            border-radius: 12px;
+            color: var(--red);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover { background: rgba(248, 81, 73, 0.2); transform: translateY(-2px); }
+
+        .theme-picker {
+            position: fixed;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .theme-dot {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .theme-dot:hover { transform: scale(1.2); }
+        .theme-dot.active { border-color: #fff; transform: scale(1.15); }
+        .theme-dot.blue { background: linear-gradient(135deg, #58a6ff, #1f6feb); }
+        .theme-dot.purple { background: linear-gradient(135deg, #8b5cf6, #e91e63); }
+        .theme-dot.green { background: linear-gradient(135deg, #3fb950, #00d4aa); }
+        .theme-dot.red { background: linear-gradient(135deg, #f85149, #ff6b00); }
+        .theme-dot.gold { background: linear-gradient(135deg, #f0b429, #ff9800); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 25px 22px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeUp 0.6s ease-out backwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+        }
+
+        .stat-card.gold::before { background: linear-gradient(90deg, var(--gold), #ff6b00); }
+        .stat-card.green::before { background: linear-gradient(90deg, var(--green), #00d4aa); }
+        .stat-card.purple::before { background: linear-gradient(90deg, var(--purple), #e91e63); }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--accent);
+            box-shadow: 0 25px 50px rgba(88, 166, 255, 0.2);
+        }
+
+        .stat-icon { font-size: 2.2em; margin-bottom: 15px; display: block; }
+        .stat-value {
+            font-size: 2.4em; font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px; line-height: 1.1;
+        }
+
+        .stat-card.gold .stat-value { background: linear-gradient(135deg, #f0b429, #ff6b00); -webkit-background-clip: text; background-clip: text; }
+        .stat-card.green .stat-value { background: linear-gradient(135deg, #3fb950, #00d4aa); -webkit-background-clip: text; background-clip: text; }
+        .stat-card.purple .stat-value { background: linear-gradient(135deg, #8b5cf6, #e91e63); -webkit-background-clip: text; background-clip: text; }
+
+        .stat-label { color: var(--text-muted); font-size: 0.9em; font-weight: 500; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 25px;
+            animation: fadeUp 0.6s ease-out backwards;
+        }
+
+        .chart-title { color: var(--text); font-size: 1.1em; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .chart-container { position: relative; height: 280px; }
+
+        .level-section, .daily-section, .leaderboard-section, .heatmap-section, .achievements-section, .table-section, .goals-section, .comparison-section, .calendar-section, .analytics-section, .notifications-section, .challenges-section {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 30px;
+            margin-bottom: 30px;
+            animation: fadeUp 0.6s ease-out backwards;
+        }
+
+        .section-title { color: var(--text); font-size: 1.2em; font-weight: 700; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+
+        .progress-item { margin-bottom: 25px; }
+        .progress-item:last-child { margin-bottom: 0; }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.95em; }
+        .progress-header .label { font-weight: 600; color: var(--text); }
+        .progress-header .value { color: var(--text-muted); }
+        .progress-header .value.done { color: var(--green); font-weight: 700; }
+
+        .progress-bar {
+            height: 14px;
+            background: rgba(13, 17, 23, 0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        [data-theme="light"] .progress-bar { background: rgba(0, 0, 0, 0.1); }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill.ads { background: linear-gradient(90deg, #58a6ff, #1f6feb, #58a6ff); background-size: 200% 100%; animation: gradientMove 3s linear infinite; }
+        .progress-fill.voice { background: linear-gradient(90deg, #8b5cf6, #a855f7, #8b5cf6); background-size: 200% 100%; animation: gradientMove 3s linear infinite; }
+        .progress-fill.level { background: linear-gradient(90deg, #f0b429, #ff6b00, #f0b429); background-size: 200% 100%; animation: gradientMove 3s linear infinite; }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+
+        .leaderboard-item:hover { background: rgba(88, 166, 255, 0.08); transform: translateX(-5px); }
+        .leaderboard-item.current { background: rgba(88, 166, 255, 0.15); border: 1px solid rgba(88, 166, 255, 0.4); }
+
+        .leaderboard-rank {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            font-weight: 900;
+            font-size: 1.1em;
+            background: rgba(88, 166, 255, 0.15);
+            color: var(--blue);
+        }
+
+        .leaderboard-rank.top1 { background: linear-gradient(135deg, #f0b429, #ff6b00); color: #fff; }
+        .leaderboard-rank.top2 { background: linear-gradient(135deg, #c0c0c0, #808080); color: #fff; }
+        .leaderboard-rank.top3 { background: linear-gradient(135deg, #cd7f32, #8b4513); color: #fff; }
+
+        .leaderboard-info { flex: 1; }
+        .leaderboard-info .name { color: var(--text); font-weight: 600; font-size: 0.95em; }
+        .leaderboard-info .stats { color: var(--text-muted); font-size: 0.8em; margin-top: 3px; }
+        .leaderboard-xp { color: var(--accent); font-weight: 900; font-size: 1.1em; }
+
+        .heatmap-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 15px; }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background: rgba(88, 166, 255, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .heatmap-cell:hover { transform: scale(1.2); box-shadow: 0 0 15px rgba(88, 166, 255, 0.6); }
+        .heatmap-cell[data-level="1"] { background: rgba(88, 166, 255, 0.25); }
+        .heatmap-cell[data-level="2"] { background: rgba(88, 166, 255, 0.5); }
+        .heatmap-cell[data-level="3"] { background: rgba(88, 166, 255, 0.75); }
+        .heatmap-cell[data-level="4"] { background: var(--blue); }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .calendar-header {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            font-weight: 700;
+            padding: 8px 0;
+        }
+
+        .calendar-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(88, 166, 255, 0.05);
+            font-size: 0.9em;
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .calendar-cell.today { background: rgba(88, 166, 255, 0.3); color: #fff; font-weight: 700; }
+        .calendar-cell.excuse { background: rgba(240, 180, 41, 0.3); color: var(--gold); }
+        .calendar-cell.vacation { background: rgba(63, 185, 80, 0.3); color: var(--green); }
+        .calendar-cell.empty { background: transparent; }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .achievement-item {
+            background: rgba(88, 166, 255, 0.08);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 16px;
+            padding: 18px 14px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .achievement-item:hover { transform: translateY(-5px) scale(1.03); border-color: var(--gold); box-shadow: 0 15px 30px rgba(240, 180, 41, 0.2); }
+        .achievement-item.locked { opacity: 0.5; filter: grayscale(0.7); }
+        .achievement-item.unlocked { border-color: var(--gold); background: rgba(240, 180, 41, 0.1); }
+
+        .achievement-item.rarity-common { border-color: rgba(139, 148, 158, 0.5); }
+        .achievement-item.rarity-rare { border-color: rgba(88, 166, 255, 0.6); }
+        .achievement-item.rarity-epic { border-color: rgba(139, 92, 246, 0.6); }
+        .achievement-item.rarity-legendary { border-color: rgba(240, 180, 41, 0.8); box-shadow: 0 0 20px rgba(240, 180, 41, 0.2); }
+
+        .achievement-icon { font-size: 2.2em; margin-bottom: 8px; display: block; }
+        .achievement-name { font-size: 0.85em; color: var(--text); font-weight: 600; margin-bottom: 6px; }
+        .achievement-desc { font-size: 0.72em; color: var(--text-muted); margin-bottom: 8px; min-height: 28px; }
+
+        .achievement-progress {
+            height: 6px;
+            background: rgba(13, 17, 23, 0.8);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .achievement-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            border-radius: 3px;
+            transition: width 1s;
+        }
+
+        .achievement-progress-text { font-size: 0.7em; color: var(--text-muted); }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .analytics-item {
+            background: rgba(88, 166, 255, 0.05);
+            border: 1px solid rgba(88, 166, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .analytics-value { font-size: 1.8em; font-weight: 900; color: var(--accent); margin-bottom: 5px; }
+        .analytics-label { color: var(--text-muted); font-size: 0.85em; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+
+        th {
+            text-align: right;
+            padding: 15px;
+            color: var(--accent);
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 2px solid rgba(88, 166, 255, 0.2);
+        }
+
+        td { padding: 15px; border-bottom: 1px solid rgba(48, 54, 61, 0.5); font-size: 0.95em; }
+        [data-theme="light"] td { border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+        tr:hover td { background: rgba(88, 166, 255, 0.05); }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-primary { background: rgba(88, 166, 255, 0.15); color: var(--blue); border: 1px solid rgba(88, 166, 255, 0.3); }
+        .badge-success { background: rgba(63, 185, 80, 0.15); color: var(--green); border: 1px solid rgba(63, 185, 80, 0.3); }
+
+        .footer { text-align: center; color: var(--text-muted); font-size: 0.8em; margin-top: 40px; padding: 20px; }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px 22px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.4s ease-out;
+            max-width: 380px;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .notification.success { border-color: rgba(63, 185, 80, 0.5); }
+        .notification.warning { border-color: rgba(240, 180, 41, 0.5); }
+        .notification.info { border-color: rgba(88, 166, 255, 0.5); }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: modalIn 0.4s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-icon { font-size: 5em; margin-bottom: 20px; display: block; }
+        .modal-title { font-size: 1.5em; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+        .modal-desc { color: var(--text-muted); font-size: 1em; margin-bottom: 20px; line-height: 1.6; }
+        .modal-xp {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: #fff;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        .modal-close {
+            padding: 12px 30px;
+            background: rgba(88, 166, 255, 0.15);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            color: var(--accent);
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        .modal-close:hover { background: rgba(88, 166, 255, 0.3); }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .comparison-item {
+            background: rgba(88, 166, 255, 0.05);
+            border: 1px solid rgba(88, 166, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .comparison-value { font-size: 2em; font-weight: 900; margin-bottom: 5px; }
+        .comparison-value.positive { color: var(--green); }
+        .comparison-value.negative { color: var(--red); }
+        .comparison-label { color: var(--text-muted); font-size: 0.85em; }
+
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .notif-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            border-radius: 14px;
+            background: rgba(88, 166, 255, 0.05);
+            border: 1px solid rgba(88, 166, 255, 0.15);
+            transition: all 0.3s;
+        }
+
+        .notif-item:hover { transform: translateX(-5px); background: rgba(88, 166, 255, 0.1); }
+        .notif-item.notif-success { border-color: rgba(63, 185, 80, 0.4); background: rgba(63, 185, 80, 0.08); }
+        .notif-item.notif-warning { border-color: rgba(240, 180, 41, 0.4); background: rgba(240, 180, 41, 0.08); }
+        .notif-item.notif-info { border-color: rgba(88, 166, 255, 0.4); background: rgba(88, 166, 255, 0.08); }
+
+        .notif-icon { font-size: 1.8em; }
+        .notif-content { flex: 1; }
+        .notif-message { color: var(--text); font-weight: 600; font-size: 0.95em; }
+        .notif-time { color: var(--text-muted); font-size: 0.75em; margin-top: 3px; }
+
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .challenge-item {
+            background: rgba(88, 166, 255, 0.05);
+            border: 1px solid rgba(88, 166, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .challenge-item:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .challenge-item.completed { border-color: var(--gold); background: rgba(240, 180, 41, 0.1); box-shadow: 0 0 20px rgba(240, 180, 41, 0.2); }
+
+        .challenge-icon { font-size: 2.2em; margin-bottom: 10px; display: block; }
+        .challenge-name { color: var(--text); font-weight: 700; font-size: 1em; margin-bottom: 5px; }
+        .challenge-desc { color: var(--text-muted); font-size: 0.8em; margin-bottom: 12px; }
+
+        .challenge-progress {
+            height: 8px;
+            background: rgba(13, 17, 23, 0.8);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .challenge-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            border-radius: 4px;
+            transition: width 1s;
+        }
+
+        .challenge-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+
+        .challenge-reward { color: var(--gold); font-weight: 700; }
+
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .theme-picker { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; }
+            .user-info { flex-direction: column; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stat-value { font-size: 1.8em; }
+            table { font-size: 0.85em; }
+            th, td { padding: 10px 8px; }
+            .heatmap-grid { grid-template-columns: repeat(6, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            body { background: #fff; color: #000; }
+            .header-actions, .notification, .theme-picker { display: none; }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div class="theme-picker">
+        <div class="theme-dot blue active" onclick="setColor('blue')" title="شین"></div>
+        <div class="theme-dot purple" onclick="setColor('purple')" title="مۆر"></div>
+        <div class="theme-dot green" onclick="setColor('green')" title="سەوز"></div>
+        <div class="theme-dot red" onclick="setColor('red')" title="سوور"></div>
+        <div class="theme-dot gold" onclick="setColor('gold')" title="زێڕین"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="user-info">
+                <div class="avatar-wrapper frame-{{ frame }}">
+                    <img src="{{ avatar_url }}" alt="avatar" class="avatar" onerror="this.style.display='none'">
+                </div>
+                <div class="user-details">
+                    <span class="title-badge">{{ title }}</span>
+                    <h2>{{ user_tag }}</h2>
+                    <p>🆔 {{ user_id }}</p>
+                    <div class="badges-row">
+                        <span class="mini-badge badge-level">🏆 ئاست {{ level }}</span>
+                        <span class="mini-badge badge-rank">📊 پلە #{{ rank }}</span>
+                        <span class="mini-badge badge-streak">🔥 {{ streak }} ڕۆژ</span>
+                    </div>
+                </div>
+            </div>
+<div class="header-actions">
+    <button class="icon-btn" onclick="toggleTheme()" title="گۆڕینی ڕووکار">🌙</button>
+    <button class="icon-btn" onclick="shareStats()" title="بڵاوکردنەوە">📤</button>
+    <a href="/my-data" class="icon-btn" title="داتاکانی من">📁</a>
+    <button class="icon-btn" onclick="takeScreenshot()" title="Screenshot">📸</button>
+    <button class="icon-btn" onclick="exportCSV()" title="Export CSV">📊</button>
+    <button class="icon-btn" onclick="toggleSound()" title="دەنگ" id="soundBtn">🔊</button>
+
+    <!-- دوگمەی Setting - بۆ ئەمینەکان دەچێتە Admin، بۆ ئاسایی هیچ ناکات -->
+    <button class="icon-btn" onclick="goToSettings()" title="ڕێکخستن">⚙️</button>
+
+    <a href="/logout" class="logout-btn">🚪 دەرچوون</a>
+</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card gold">
+                <span class="stat-icon">🎯</span>
+                <div class="stat-value counter" data-target="{{ level }}">0</div>
+                <div class="stat-label">ئاست (Level)</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">⭐</span>
+                <div class="stat-value counter" data-target="{{ xp }}">0</div>
+                <div class="stat-label">کۆی XP</div>
+            </div>
+            <div class="stat-card green">
+                <span class="stat-icon">📢</span>
+                <div class="stat-value counter" data-target="{{ all_ads }}">0</div>
+                <div class="stat-label">کۆی ڕیکلامەکان</div>
+            </div>
+            <div class="stat-card purple">
+                <span class="stat-icon">🎙️</span>
+                <div class="stat-value counter" data-target="{{ all_mins // 60 }}">0</div>
+                <div class="stat-label">کۆی کاتی ڤۆیس (سەعات)</div>
+            </div>
+        </div>
+
+        <div class="notifications-section">
+            <h3 class="section-title">🔔 ئاگادارییەکان</h3>
+            <div class="notifications-list">
+                {% for notif in notifications %}
+                <div class="notif-item notif-{{ notif.type }}">
+                    <span class="notif-icon">{{ notif.icon }}</span>
+                    <div class="notif-content">
+                        <div class="notif-message">{{ notif.message }}</div>
+                        <div class="notif-time">{{ notif.time }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="challenges-section">
+            <h3 class="section-title">🎯 چالێنجی ڕۆژانە</h3>
+            <div class="challenges-grid">
+                {% for c in challenges %}
+                <div class="challenge-item {{ 'completed' if c.completed else '' }}">
+                    <div class="challenge-icon">{{ c.icon }}</div>
+                    <div class="challenge-name">{{ c.name }}</div>
+                    <div class="challenge-desc">{{ c.desc }}</div>
+                    <div class="challenge-progress">
+                        <div class="challenge-progress-fill" style="width: {{ c.percent }}%"></div>
+                    </div>
+                    <div class="challenge-footer">
+                        <span>{{ c.current }} / {{ c.target }}</span>
+                        <span class="challenge-reward">+{{ c.xp_reward }} XP</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="analytics-section">
+            <h3 class="section-title">📊 شیکاری پێشکەوتوو</h3>
+            <div class="analytics-grid">
+                <div class="analytics-item">
+                    <div class="analytics-value">{{ analytics.best_day }}</div>
+                    <div class="analytics-label">🌟 باشترین ڕۆژ</div>
+                </div>
+                <div class="analytics-item">
+                    <div class="analytics-value">{{ analytics.best_week }}</div>
+                    <div class="analytics-label">📅 باشترین هەفتە</div>
+                </div>
+                <div class="analytics-item">
+                    <div class="analytics-value">{{ analytics.avg_per_day }}</div>
+                    <div class="analytics-label">📈 تێکڕای ڕۆژانە</div>
+                </div>
+                <div class="analytics-item">
+                    <div class="analytics-value">
+                        {% if analytics.trend == "up" %}📈 بەرەو پێش{% else %}📉 دواوە{% endif %}
+                    </div>
+                    <div class="analytics-label">🎯 ئاراستە</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-section">
+            <h3 class="section-title">⚖️ بەراوردکردن لەگەڵ تێکڕای پارتنەرەکان</h3>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <div class="comparison-value {{ 'positive' if comparison.ads >= 0 else 'negative' }}">
+                        {{ '+' if comparison.ads >= 0 else '' }}{{ comparison.ads }}%
+                    </div>
+                    <div class="comparison-label">📢 ڕیکلام</div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-value {{ 'positive' if comparison.voice >= 0 else 'negative' }}">
+                        {{ '+' if comparison.voice >= 0 else '' }}{{ comparison.voice }}%
+                    </div>
+                    <div class="comparison-label">🎙️ ڤۆیس</div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-value {{ 'positive' if comparison.xp >= 0 else 'negative' }}">
+                        {{ '+' if comparison.xp >= 0 else '' }}{{ comparison.xp }}%
+                    </div>
+                    <div class="comparison-label">⭐ XP</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="level-section">
+            <h3 class="section-title">🎖️ پێشکەوتنی ئاست</h3>
+            <div class="progress-header">
+                <span class="label">⭐ XP بۆ ئاستی داهاتوو</span>
+                <span class="value">{{ xp_in_level }} / {{ xp_for_next }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill level" style="width: {{ level_percent }}%"></div>
+            </div>
+        </div>
+
+        <div class="goals-section">
+            <h3 class="section-title">🎯 ئامانجەکان</h3>
+
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span class="label">📢 ئامانجی ڕۆژانە (ڕیکلام)</span>
+                    <span class="value {{ 'done' if goals.daily_ads.percent >= 100 else '' }}">{{ goals.daily_ads.current }} / {{ goals.daily_ads.target }}</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill ads" style="width: {{ goals.daily_ads.percent }}%"></div></div>
+            </div>
+
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span class="label">🎙️ ئامانجی ڕۆژانە (ڤۆیس)</span>
+                    <span class="value {{ 'done' if goals.daily_voice.percent >= 100 else '' }}">{{ goals.daily_voice.current }} / {{ goals.daily_voice.target }} خولەک</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill voice" style="width: {{ goals.daily_voice.percent }}%"></div></div>
+            </div>
+
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span class="label">📅 ئامانجی هەفتانە (ڕیکلام)</span>
+                    <span class="value {{ 'done' if goals.weekly_ads.percent >= 100 else '' }}">{{ goals.weekly_ads.current }} / {{ goals.weekly_ads.target }}</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill ads" style="width: {{ goals.weekly_ads.percent }}%"></div></div>
+            </div>
+
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span class="label">🎙️ ئامانجی هەفتانە (ڤۆیس)</span>
+                    <span class="value {{ 'done' if goals.weekly_voice.percent >= 100 else '' }}">{{ goals.weekly_voice.current }} / {{ goals.weekly_voice.target }} خولەک</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill voice" style="width: {{ goals.weekly_voice.percent }}%"></div></div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3 class="chart-title">📢 چارتی ڕیکلامەکان</h3>
+                <div class="chart-container"><canvas id="adsChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">🎙️ چارتی ڤۆیس (سەعات)</h3>
+                <div class="chart-container"><canvas id="voiceChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3 class="chart-title">🎯 بەراوردکردنی بوارەکان</h3>
+                <div class="chart-container"><canvas id="radarChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">📈 چالاکی ڕۆژانە</h3>
+                <div class="chart-container"><canvas id="trendChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="calendar-section">
+            <h3 class="section-title">📅 ڕۆژژمێری ئەم مانگە</h3>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <div class="leaderboard-section">
+            <h3 class="section-title">🏆 ڕیزبەندی ١٠ پارتنەری سەرەکی</h3>
+            {% for p in leaderboard %}
+            <div class="leaderboard-item {{ 'current' if p.user_id == user_id else '' }}">
+                <div class="leaderboard-rank {% if loop.index == 1 %}top1{% elif loop.index == 2 %}top2{% elif loop.index == 3 %}top3{% endif %}">
+                    {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+                </div>
+                <div class="leaderboard-info">
+                    <div class="name">{{ 'تۆ' if p.user_id == user_id else 'User#' + p.user_id|string }}</div>
+                    <div class="stats">📢 {{ p.all_ads }} ڕیکلام • 🎙️ {{ (p.all_mins or 0) // 60 }}h ڤۆیس</div>
+                </div>
+                <div class="leaderboard-xp">{{ "{:,}".format(p.xp or 0) }} XP</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="heatmap-section">
+            <h3 class="section-title">🔥 چالاکی ٣٠ ڕۆژی ڕابردوو</h3>
+            <div class="heatmap-grid">
+                {% for day in activity %}
+                <div class="heatmap-cell" data-level="{{ day.level }}" title="{{ day.date }}"></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="achievements-section">
+            <h3 class="section-title">🏅 دەستکەوتەکان ({{ unlocked_count }} / {{ total_achievements }})</h3>
+            <div class="achievements-grid">
+                {% for ach in achievements %}
+                <div class="achievement-item rarity-{{ ach.rarity }} {{ 'unlocked' if ach.unlocked else 'locked' }}"
+                     onclick="showAchievement('{{ ach.icon }}', '{{ ach.name }}', '{{ ach.desc }}', {{ ach.xp_reward }}, {{ 'true' if ach.unlocked else 'false' }})">
+                    <span class="achievement-icon">{{ ach.icon }}</span>
+                    <div class="achievement-name">{{ ach.name }}</div>
+                    <div class="achievement-desc">{{ ach.desc }}</div>
+                    <div class="achievement-progress">
+                        <div class="achievement-progress-fill" style="width: {{ ach.percent }}%"></div>
+                    </div>
+                    <div class="achievement-progress-text">{{ ach.current }} / {{ ach.target }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="table-section">
+            <h3 class="section-title">📊 ئاماری وردی گشتی</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ماوە</th>
+                        <th>📢 ڕیکلام</th>
+                        <th>🎙️ ڤۆیس</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ئەمڕۆ</strong></td>
+                        <td><span class="badge badge-primary">{{ day_ads }}</span></td>
+                        <td><span class="badge badge-primary">{{ day_mins // 60 }}h {{ day_mins % 60 }}m</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>ئەم هەفتەیە</strong></td>
+                        <td><span class="badge badge-primary">{{ week_ads }}</span></td>
+                        <td><span class="badge badge-primary">{{ week_mins // 60 }}h</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>ئەم مانگە</strong></td>
+                        <td><span class="badge badge-primary">{{ month_ads }}</span></td>
+                        <td><span class="badge badge-primary">{{ month_mins // 60 }}h</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>گشتی</strong></td>
+                        <td><span class="badge badge-success">{{ all_ads }}</span></td>
+                        <td><span class="badge badge-success">{{ all_mins // 60 }}h</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">دروستکراوە لە لایەن STORMBOY و MRX • NINE</div>
+    </div>
+
+    <div class="modal-overlay" id="achievementModal" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <span class="modal-icon" id="modalIcon">🏆</span>
+            <h2 class="modal-title" id="modalTitle">ناوی دەستکەوت</h2>
+            <p class="modal-desc" id="modalDesc">وەسفی دەستکەوت</p>
+            <div class="modal-xp" id="modalXp">+50 XP</div>
+            <br>
+            <button class="modal-close" onclick="closeModal()">داخستن</button>
+        </div>
+    </div>
+
+    <script>
+        const chartData = {{ chart_data | tojson }};
+        const calendarData = {{ calendar_data | tojson }};
+        const userLevel = {{ level }};
+        const userXP = {{ xp }};
+        const userRank = {{ rank }};
+        const userAds = {{ all_ads }};
+        const userMins = {{ all_mins }};
+        const userStreak = {{ streak }};
+        const xpInLevel = {{ xp_in_level }};
+
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.querySelector('.icon-btn').textContent = newTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        function setColor(color) {
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+            event.target.classList.add('active');
+            document.documentElement.style.setProperty('--accent',
+                color === 'blue' ? '#58a6ff' :
+                color === 'purple' ? '#8b5cf6' :
+                color === 'green' ? '#3fb950' :
+                color === 'red' ? '#f85149' : '#f0b429');
+            localStorage.setItem('accentColor', color);
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.body.setAttribute('data-theme', savedTheme);
+            document.querySelector('.icon-btn').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        function animateCounters() {
+            document.querySelectorAll('.counter').forEach(el => {
+                const target = parseInt(el.getAttribute('data-target')) || 0;
+                const duration = 1500;
+                const step = target / (duration / 16);
+                let current = 0;
+                const timer = setInterval(() => {
+                    current += step;
+                    if (current >= target) {
+                        el.textContent = target.toLocaleString('en-US');
+                        clearInterval(timer);
+                    } else {
+                        el.textContent = Math.floor(current).toLocaleString('en-US');
+                    }
+                }, 16);
+            });
+        }
+
+        function checkAndCelebrate() {
+            const dayAds = {{ day_ads }};
+            const dayMins = {{ day_mins }};
+            const isDone = dayAds >= 3 && dayMins >= 120;
+            const today = new Date().toDateString();
+            const lastCelebration = localStorage.getItem('lastCelebration');
+
+            if (isDone && lastCelebration !== today) {
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 200,
+                        spread: 100,
+                        origin: { y: 0.6 },
+                        colors: ['#58a6ff', '#8b5cf6', '#3fb950', '#f0b429']
+                    });
+                    localStorage.setItem('lastCelebration', today);
+                    showNotification('🎉 پیرۆزە! مەرجەکانی ئەمڕۆت تەواو کرد!', 'success');
+                }, 2000);
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notif = document.createElement('div');
+            notif.className = 'notification ' + type;
+            notif.innerHTML = message;
+            document.body.appendChild(notif);
+            setTimeout(() => {
+                notif.style.animation = 'slideIn 0.4s reverse';
+                setTimeout(() => notif.remove(), 400);
+            }, 5000);
+        }
+
+        function shareStats() {
+            const text = `🎯 ئاست: ${userLevel}\n⭐ XP: ${userXP}\n📢 ڕیکلام: ${userAds}\n🎙️ ڤۆیس: ${Math.floor(userMins/60)} سەعات\n🏆 پلە: #${userRank}\n🔥 Streak: ${userStreak} ڕۆژ`;
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('✅ ئامارەکانت کۆپی کران!', 'success');
+            });
+        }
+
+        function takeScreenshot() {
+            showNotification('📸 وێنە دەگیرێت...', 'info');
+            const container = document.querySelector('.container');
+            html2canvas(container, {
+                backgroundColor: getComputedStyle(document.body).backgroundColor,
+                scale: 2,
+                logging: false,
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `panel-${userLevel}-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showNotification('✅ وێنە داگیرا!', 'success');
+            }).catch(() => {
+                showNotification('❌ هەڵە لە وێنەگرتن', 'warning');
+            });
+        }
+
+        function exportCSV() {
+            const csvContent = [
+                ['ماوە', 'ڕیکلام', 'ڤۆیس'],
+                ['ئەمڕۆ', '{{ day_ads }}', '{{ day_mins }}'],
+                ['هەفتە', '{{ week_ads }}', '{{ week_mins }}'],
+                ['مانگ', '{{ month_ads }}', '{{ month_mins }}'],
+                ['گشتی', '{{ all_ads }}', '{{ all_mins }}'],
+                [],
+                ['ئاست', '{{ level }}'],
+                ['XP', '{{ xp }}'],
+                ['پلە', '{{ rank }}'],
+                ['Streak', '{{ streak }}'],
+            ].map(row => row.join(',')).join('\n');
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `stats-${Date.now()}.csv`;
+            link.click();
+            showNotification('✅ داتاکان داگیران!', 'success');
+        }
+
+        let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('soundEnabled', soundEnabled);
+            document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+        }
+
+        function showAchievement(icon, name, desc, xpReward, unlocked) {
+            document.getElementById('modalIcon').textContent = icon;
+            document.getElementById('modalTitle').textContent = name;
+            document.getElementById('modalDesc').textContent = desc + (unlocked ? ' ✅ بەدەستهاتووە!' : ' ⏳ هێشتا نەبەدەستهاتووە');
+            document.getElementById('modalXp').textContent = unlocked ? `+${xpReward} XP بەدەستهاتووە` : `+${xpReward} XP لە چاوەڕوانیدایە`;
+            document.getElementById('achievementModal').classList.add('active');
+            if (unlocked) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            if (!grid) return;
+            const days = ['یەکشەممە', 'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە', 'هەینی', 'شەممە'];
+            days.forEach(d => {
+                const header = document.createElement('div');
+                header.className = 'calendar-header';
+                header.textContent = d.substring(0, 3);
+                grid.appendChild(header);
+            });
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 0; i < firstDay; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell empty';
+                grid.appendChild(cell);
+            }
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                cell.textContent = day;
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                if (day === today.getDate()) cell.classList.add('today');
+                if (calendarData[dateStr] === 'excuse') cell.classList.add('excuse');
+                if (calendarData[dateStr] === 'vacation') cell.classList.add('vacation');
+                grid.appendChild(cell);
+            }
+        }
+
+        Chart.defaults.color = '#8b949e';
+        Chart.defaults.font.family = 'Vazirmatn, Tahoma, sans-serif';
+
+        new Chart(document.getElementById('adsChart'), {
+            type: 'bar',
+            data: {
+                labels: chartData.ads.labels,
+                datasets: [{
+                    label: 'ڕیکلام',
+                    data: chartData.ads.values,
+                    backgroundColor: ['rgba(88, 166, 255, 0.8)', 'rgba(63, 185, 80, 0.8)', 'rgba(240, 180, 41, 0.8)', 'rgba(139, 92, 246, 0.8)'],
+                    borderColor: ['#58a6ff', '#3fb950', '#f0b429', '#8b5cf6'],
+                    borderWidth: 2,
+                    borderRadius: 10,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(48, 54, 61, 0.3)' } },
+                    x: { grid: { display: false } }
+                },
+                animation: { duration: 1500, easing: 'easeOutQuart' }
+            }
+        });
+
+        new Chart(document.getElementById('voiceChart'), {
+            type: 'line',
+            data: {
+                labels: chartData.voice.labels,
+                datasets: [{
+                    label: 'سەعات',
+                    data: chartData.voice.values,
+                    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                    borderColor: '#8b5cf6',
+                    borderWidth: 3,
+                    fill: true, tension: 0.4,
+                    pointBackgroundColor: '#8b5cf6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(48, 54, 61, 0.3)' } },
+                    x: { grid: { display: false } }
+                },
+                animation: { duration: 1500, easing: 'easeOutQuart' }
+            }
+        });
+
+        new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: {
+                labels: chartData.radar.labels,
+                datasets: [{
+                    label: 'ئاستی تۆ',
+                    data: chartData.radar.values,
+                    backgroundColor: 'rgba(88, 166, 255, 0.2)',
+                    borderColor: '#58a6ff',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#58a6ff',
+                    pointBorderColor: '#fff',
+                    pointRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    r: {
+                        beginAtZero: true, max: 100,
+                        grid: { color: 'rgba(48, 54, 61, 0.5)' },
+                        angleLines: { color: 'rgba(48, 54, 61, 0.5)' },
+                        pointLabels: { color: '#c9d1d9', font: { size: 12, weight: 'bold' } },
+                        ticks: { display: false }
+                    }
+                },
+                animation: { duration: 1500, easing: 'easeOutQuart' }
+            }
+        });
+
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: ['هەفتە ١', 'هەفتە ٢', 'هەفتە ٣', 'هەفتە ٤'],
+                datasets: [{
+                    label: 'چالاکی',
+                    data: [20, 45, 30, 60],
+                    backgroundColor: 'rgba(63, 185, 80, 0.15)',
+                    borderColor: '#3fb950',
+                    borderWidth: 3,
+                    fill: true, tension: 0.4,
+                    pointBackgroundColor: '#3fb950',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(48, 54, 61, 0.3)' } },
+                    x: { grid: { display: false } }
+                },
+                animation: { duration: 1500, easing: 'easeOutQuart' }
+            }
+        });
+// ============ Settings Button ============
+const isAdmin = {{ 'true' if is_admin else 'false' }};
+
+function goToSettings() {
+    if (isAdmin) {
+        // ئەمینەکان دەچنە Admin Panel
+        window.location.href = '/admin';
+    } else {
+        // بەکارهێنەرانی ئاسایی - پەیامێک پیشان بدە
+        showNotification('⚠️ تەنها ئەمینەکان دەتوانن بچنە ناو ڕێکخستن', 'warning');
+        
+        // یان دەتوانیت بیاننێریتە /my-data
+        // window.location.href = '/my-data';
+    }
+}
+
+        window.addEventListener('load', () => {
+            animateCounters();
+            checkAndCelebrate();
+            renderCalendar();
+            if (localStorage.getItem('soundEnabled') === 'false') {
+                document.getElementById('soundBtn').textContent = '🔇';
+            }
+        });
+    </script>
+</body>
+</html>

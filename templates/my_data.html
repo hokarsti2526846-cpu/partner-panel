@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>داتاکانی من</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: rgba(22, 27, 34, 0.7);
+            --border: rgba(88, 166, 255, 0.15);
+            --blue: #58a6ff;
+            --purple: #8b5cf6;
+            --green: #3fb950;
+            --red: #f85149;
+            --gold: #f0b429;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+        }
+        body {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 { color: var(--blue); font-size: 1.5em; }
+        .btn {
+            padding: 12px 22px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid;
+        }
+        .btn-primary { background: rgba(88, 166, 255, 0.15); border-color: var(--blue); color: var(--blue); }
+        .btn-primary:hover { background: rgba(88, 166, 255, 0.3); transform: translateY(-2px); }
+        .btn-green { background: rgba(63, 185, 80, 0.15); border-color: var(--green); color: var(--green); }
+        .btn-green:hover { background: rgba(63, 185, 80, 0.3); transform: translateY(-2px); }
+        
+        .data-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        .data-card h2 {
+            color: var(--blue);
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { color: var(--text-muted); font-weight: 500; }
+        .data-value { color: var(--text); font-weight: 700; font-size: 1.05em; }
+        .data-value.gold { color: var(--gold); }
+        .data-value.green { color: var(--green); }
+        .data-value.blue { color: var(--blue); }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .action-card {
+            background: rgba(88, 166, 255, 0.05);
+            border: 1px solid rgba(88, 166, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: var(--text);
+        }
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--blue);
+            background: rgba(88, 166, 255, 0.1);
+        }
+        .action-icon { font-size: 2.5em; margin-bottom: 10px; display: block; }
+        .action-label { font-weight: 600; font-size: 0.9em; }
+        
+        .json-box {
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: var(--green);
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 داتاکانی من</h1>
+            <div>
+                <a href="/dashboard" class="btn btn-primary">← گەڕانەوە</a>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <h2>👤 زانیارییەکانی من</h2>
+            <div class="data-row">
+                <span class="data-label">🆔 User ID</span>
+                <span class="data-value blue">{{ user.user_id }}</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">🎯 ئاست (Level)</span>
+                <span class="data-value gold">{{ user.level or 1 }}</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">⭐ کۆی XP</span>
+                <span class="data-value">{{ "{:,}".format(user.xp or 0) }}</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">🔥 Streak</span>
+                <span class="data-value">{{ user.daily_streak or 0 }} ڕۆژ</span>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <h2>📢 ڕیکلامەکان</h2>
+            <div class="data-row">
+                <span class="data-label">ئەمڕۆ</span>
+                <span class="data-value">{{ user.day_ads or 0 }}</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">ئەم هەفتەیە</span>
+                <span class="data-value">{{ user.week_ads or 0 }}</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">ئەم مانگە</span>
+                <span class="data-value">{{ user.month_ads or 0 }}</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">گشتی</span>
+                <span class="data-value green">{{ user.all_ads or 0 }}</span>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <h2>🎙️ ڤۆیسەکان</h2>
+            <div class="data-row">
+                <span class="data-label">ئەمڕۆ</span>
+                <span class="data-value">{{ (user.day_mins or 0) // 60 }}h {{ (user.day_mins or 0) % 60 }}m</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">ئەم هەفتەیە</span>
+                <span class="data-value">{{ (user.week_mins or 0) // 60 }}h</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">ئەم مانگە</span>
+                <span class="data-value">{{ (user.month_mins or 0) // 60 }}h</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">گشتی</span>
+                <span class="data-value green">{{ (user.all_mins or 0) // 60 }}h {{ (user.all_mins or 0) % 60 }}m</span>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <h2>📥 داگرتن</h2>
+            <div class="actions-grid">
+                <a href="/export/my-json" class="action-card">
+                    <span class="action-icon">📄</span>
+                    <div class="action-label">JSON</div>
+                </a>
+                <a href="/export/my-csv" class="action-card">
+                    <span class="action-icon">📊</span>
+                    <div class="action-label">CSV (Excel)</div>
+                </a>
+                <a href="/export/my-pdf" class="action-card">
+                    <span class="action-icon">📕</span>
+                    <div class="action-label">PDF</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
