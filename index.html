@@ -548,7 +548,7 @@
 
     <script>
         // ============================================
-        // ⚠️ گرنگ: ئەم دوو زانیارییە بگۆڕە
+        // ⚠ە گرنگ: ئەم دوو زانیارییە بگۆڕە
         // ============================================
         const SUPABASE_URL = "https://pswnlfmyvgwwbawqsypw.supabase.co";
         const SUPABASE_KEY = "sb_publishable_jW_7fj1WJIdHRnY5PolyDg_hqtCk82o";
@@ -588,12 +588,11 @@
 
         function showLoginError(msg) {
             const err = document.getElementById('loginError');
-            err.textContent = '⚠️ ' + msg;
+            err.textContent = '⚠ە ' + msg;
             err.style.display = 'block';
         }
 
         async function logout() {
-            // unsubscribe لە realtime
             if (realtimeChannel) {
                 await supabaseClient.removeChannel(realtimeChannel);
             }
@@ -608,14 +607,13 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
 
             if (session && session.user) {
-                // بەکارهێنەر چووەتە ژوورەوە
                 currentUserId = session.user.user_metadata.provider_id || session.user.id;
 
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('dashboard').classList.add('active');
 
                 await loadUserData();
-                await setupRealtime();
+                setupRealtime();
             } else {
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('dashboard').classList.remove('active');
@@ -629,7 +627,6 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) return;
 
-            // زانیاری بەکارهێنەر
             const user = session.user;
             const discordId = user.user_metadata.provider_id || user.id;
             const userName = user.user_metadata.full_name || user.user_metadata.name || 'User';
@@ -644,7 +641,6 @@
                 document.getElementById('userAvatar').src = 'https://cdn.discordapp.com/embed/avatars/0.png';
             }
 
-            // داتای ئامار
             await fetchAndUpdateStats(discordId);
         }
 
@@ -657,10 +653,9 @@
                     .single();
 
                 if (error || !data) {
-                    // بەکارهێنەر نەدۆزرایەوە
                     document.getElementById('loading').innerHTML = `
                         <div class="error-box" style="max-width: 500px; margin: 0 auto;">
-                            <h3 style="margin-bottom: 10px;">⚠️ بەکارهێنەر نەدۆزرایەوە</h3>
+                            <h3 style="margin-bottom: 10px;">⚠ە بەکارهێنەر نەدۆزرایەوە</h3>
                             <p>ID: ${discordId}</p>
                             <p style="margin-top: 10px;">تکایە پەیوەندی بە ئەمینەکان بکە بۆ زیادکردنت.</p>
                         </div>
@@ -668,10 +663,8 @@
                     return;
                 }
 
-                // پانێڵەکە ئەپدەیت بکە
                 updatePanel(data);
 
-                // Loading لابە
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
 
@@ -839,27 +832,33 @@
         }
 
         // ============================================
-        // Real-time Updates
+        // ✅ Real-time Sync (یەک جار)
         // ============================================
-        async function setupRealtime() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
+        function setupRealtime() {
+            if (realtimeChannel) {
+                supabaseClient.removeChannel(realtimeChannel);
+            }
+
+            const { data: { session } } = supabaseClient.auth.getSession();
             if (!session) return;
 
-            const discordId = session.user.user_metadata.provider_id || session.user.id;
+            const discordId = parseInt(session.user.user_metadata.provider_id || session.user.id);
 
             realtimeChannel = supabaseClient
-                .channel('stats-changes')
+                .channel('stats-changes-' + discordId)
                 .on('postgres_changes', {
-                    event: 'UPDATE',
+                    event: '*',
                     schema: 'public',
                     table: 'stats_history',
                     filter: `user_id=eq.${discordId}`
                 }, (payload) => {
                     console.log('🔄 داتا نوێ:', payload.new);
-                    updatePanel(payload.new);
+                    if (payload.new) {
+                        updatePanel(payload.new);
+                    }
                 })
                 .subscribe((status) => {
-                    console.log('Realtime status:', status);
+                    console.log('Realtime:', status);
                 });
         }
 
@@ -868,7 +867,6 @@
         // ============================================
         window.addEventListener('load', checkSession);
 
-        // Listener بۆ گۆڕانکاری Auth
         supabaseClient.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN') {
                 checkSession();
